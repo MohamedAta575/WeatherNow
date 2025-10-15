@@ -1,0 +1,8 @@
+package com.example.weathernow.presentation.auth
+
+sealed class AuthIntent {
+    data class SignIn(val email: String, val password: String) : AuthIntent()
+    data class SignUp(val email: String, val password: String) : AuthIntent()
+    object SignOut : AuthIntent()
+    object CheckUser : AuthIntent()
+}
