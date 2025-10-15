@@ -21,4 +21,13 @@ interface WeatherApiService {
         @Query("aqi") aqi: String = "no",
         @Query("alerts") alerts: String = "no"
     ): WeatherDto
+
+    @GET("v1/forecast.json")
+    suspend fun getWeatherByCoordinates(
+        @Query("key") apiKey: String,
+        @Query("q") latLon: String,
+        @Query("days") days: Int = 7,
+        @Query("aqi") aqi: String = "no",
+        @Query("alerts") alerts: String = "no"
+    ): WeatherDto
 }

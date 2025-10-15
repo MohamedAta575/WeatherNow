@@ -40,4 +40,32 @@ class WeatherRepositoryImpl @Inject constructor(
             }
         )
     }
+
+    override suspend fun getWeatherByCoordinates(lat: Double, lon: Double): WeatherInfo {
+        val latLonString = "$lat,$lon"
+        val response = api.getWeatherByCoordinates(apiKey, latLonString, days = 7)
+
+        return WeatherInfo(
+            cityName = response.location.name,
+            currentTemp = response.current.temp_c,
+            condition = response.current.condition.text,
+            humidity = response.current.humidity,
+            windKph = response.current.wind_kph,
+            hourly = response.forecast.forecastday.firstOrNull()?.hour?.map {
+                HourlyWeather(
+                    time = it.time.takeLast(5),
+                    temp = it.temp_c,
+                    condition = it.condition.text
+                )
+            } ?: emptyList(),
+            daily = response.forecast.forecastday.map {
+                DailyWeather(
+                    date = it.date,
+                    minTemp = it.day.mintemp_c,
+                    maxTemp = it.day.maxtemp_c,
+                    condition = it.day.condition.text
+                )
+            }
+        )
+    }
 }

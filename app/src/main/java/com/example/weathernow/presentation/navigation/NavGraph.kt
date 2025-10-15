@@ -1,6 +1,7 @@
 package com.example.weathernow.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -11,6 +12,7 @@ import com.example.weathernow.presentation.auth.AuthViewModel
 import com.example.weathernow.presentation.auth.LoginScreen
 import com.example.weathernow.presentation.auth.RegisterScreen
 import com.example.weathernow.presentation.weather.LocationScreen
+import com.example.weathernow.presentation.weather.WeatherIntent
 import com.example.weathernow.presentation.weather.WeatherScreen
 import com.example.weathernow.presentation.weather.WeatherViewModel
 
@@ -55,18 +57,20 @@ fun NavGraph(navController: NavHostController) {
         // Location Screen
         composable(Screen.Location.route) {
             LocationScreen(onCitySelected = { city ->
-                navController.navigate(Screen.Weather.createRoute(city)) // تمرير المدينة للشاشة التالية
+                navController.navigate(Screen.Weather.createRoute(city))
             })
         }
 
         // Weather Screen
         composable(
             route = Screen.Weather.route,
-            arguments = listOf(navArgument("city") { type = NavType.StringType }) // ✅ نحدد argument city
+            arguments = listOf(navArgument("city") { type = NavType.StringType })
         ) { backStackEntry ->
             val city = backStackEntry.arguments?.getString("city") ?: ""
             val viewModel: WeatherViewModel = hiltViewModel()
-            viewModel.loadWeather(city)
+            LaunchedEffect(city) {
+                viewModel.handleIntent(WeatherIntent.LoadWeather(city))
+            }
             WeatherScreen(viewModel = viewModel)
         }
     }

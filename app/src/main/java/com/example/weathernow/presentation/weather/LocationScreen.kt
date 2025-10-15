@@ -1,5 +1,7 @@
 package com.example.weathernow.presentation.weather
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,35 +14,38 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.weathernow.ui.theme.DesignBlue
-
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.android.gms.location.LocationServices
 
 @Composable
 fun LocationScreen(
     viewModel: WeatherViewModel = hiltViewModel(),
-    onCitySelected: (String) -> Unit,
-    onUseCurrentLocation: () -> Unit = {}
+    onCitySelected: (String) -> Unit
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     val cities by viewModel.cities.collectAsState()
     val recentSearches by viewModel.recentSearches.collectAsState()
     val popularCities by viewModel.popularCities.collectAsState()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = DesignBlue
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(colors = listOf(Color(0xFF4AA3FF), Color(0xFF6B63FF))))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+
             Spacer(Modifier.height(40.dp))
+
             Text(
                 text = "Weather Forecast",
                 fontSize = 28.sp,
@@ -54,6 +59,7 @@ fun LocationScreen(
                 color = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+
             Spacer(Modifier.height(32.dp))
 
             OutlinedTextField(
@@ -66,8 +72,8 @@ fun LocationScreen(
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = Color.Gray) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White.copy(alpha = 0.9f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.9f),
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
                     cursorColor = DesignBlue
@@ -75,11 +81,16 @@ fun LocationScreen(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = onUseCurrentLocation,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                onClick = {
+                    getCurrentLocation(context) { lat, lon ->
+                        viewModel.handleIntent(WeatherIntent.LoadWeatherByLocation(lat, lon))
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.9f)),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -89,59 +100,34 @@ fun LocationScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(vertical = 4.dp)
                 ) {
-                    Icon(
-                        Icons.Filled.LocationOn,
-                        contentDescription = "Use Current Location",
-                        tint = DesignBlue
-                    )
+                    Icon(Icons.Filled.LocationOn, contentDescription = "Location", tint = DesignBlue)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Use Current Location",
-                        color = DesignBlue,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("Use Current Location", color = DesignBlue, fontWeight = FontWeight.SemiBold)
                 }
             }
+
             Spacer(Modifier.height(24.dp))
 
             if (cities.isNotEmpty() && searchQuery.isNotEmpty()) {
-                Text(
-                    text = "Search Results",
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                Text("Search Results", color = Color.White, fontWeight = FontWeight.SemiBold)
+                LazyColumn {
                     items(cities) { city ->
                         SearchResultItem(city = city, onCitySelected = onCitySelected)
                         Divider(color = Color.White.copy(alpha = 0.2f))
                     }
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn {
                     item {
-                        Text(
-                            text = "Recent Searches",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Text("Recent Searches", color = Color.White, fontWeight = FontWeight.SemiBold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             recentSearches.forEach { city ->
                                 RecentSearchChip(city = city, onCitySelected = onCitySelected)
                             }
                         }
-                        Spacer(Modifier.height(32.dp))
 
-                        Text(
-                            text = "Popular Cities",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                        Spacer(Modifier.height(32.dp))
+                        Text("Popular Cities", color = Color.White, fontWeight = FontWeight.SemiBold)
                     }
 
                     items(popularCities) { city ->
@@ -154,7 +140,6 @@ fun LocationScreen(
     }
 }
 
-
 @Composable
 fun SearchResultItem(city: String, onCitySelected: (String) -> Unit) {
     Row(
@@ -164,12 +149,7 @@ fun SearchResultItem(city: String, onCitySelected: (String) -> Unit) {
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            city,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Light
-        )
+        Text(city, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Light)
     }
 }
 
@@ -183,7 +163,7 @@ fun RecentSearchChip(city: String, onCitySelected: (String) -> Unit) {
             labelColor = Color.White
         ),
         shape = RoundedCornerShape(20.dp),
-        border = null,
+        border = null
     )
 }
 
@@ -191,39 +171,34 @@ fun RecentSearchChip(city: String, onCitySelected: (String) -> Unit) {
 fun PopularCityCard(city: WeatherViewModel.PopularCity, onCitySelected: (String) -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCitySelected(city.name) }
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.LocationOn,
-                    contentDescription = "Location",
-                    tint = DesignBlue,
-                    modifier = Modifier.size(24.dp)
-                )
+                Icon(Icons.Filled.LocationOn, contentDescription = "Location", tint = DesignBlue)
                 Spacer(Modifier.width(16.dp))
-
                 Column {
                     Text(city.name, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = Color.Black)
                     Text(city.country, fontSize = 14.sp, color = Color.Gray)
                 }
             }
-
-            Text(
-                city.temperature,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = Color.Black
-            )
+            Text(city.temperature, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.Black)
         }
     }
 }
+
+@SuppressLint("MissingPermission")
+fun getCurrentLocation(context: android.content.Context, onLocationReceived: (Double, Double) -> Unit) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        location?.let { onLocationReceived(it.latitude, it.longitude) }
+    }
+}
+

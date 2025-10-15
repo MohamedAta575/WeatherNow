@@ -23,30 +23,35 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.weathernow.domain.model.DailyWeather
 import com.example.weathernow.domain.model.HourlyWeather
+import com.example.weathernow.ui.theme.BackgroundBrush
+import com.example.weathernow.ui.theme.CardBackgroundColor
+import com.example.weathernow.ui.theme.CardBorderColor
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.roundToInt
-
-private val BackgroundBrush = Brush.verticalGradient(
-    listOf(Color(0xFF8EC5FF).copy(alpha = 0.8f), Color(0xFFE0F7FF).copy(alpha = 0.9f))
-)
-
-private val CardBackgroundColor = Color.White.copy(alpha = 0.4f)
-private val CardBorderColor = Color.White.copy(alpha = 0.6f)
 
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
 
     Box(
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(BackgroundBrush)
             .padding(top = 16.dp)
     ) {
         when {
-            state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White)
-            state.error != null -> Text(state.error ?: "An unexpected error occurred.", color = Color.Red, modifier = Modifier.align(Alignment.Center))
+            state.isLoading -> CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White
+            )
+
+            state.error != null -> Text(
+                state.error ?: "An unexpected error occurred.",
+                color = Color.Red,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
             state.data != null -> {
                 val w = state.data ?: return@Box
                 Column(
@@ -76,6 +81,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = hiltViewModel()) {
     }
 }
 
+
 @Composable
 fun LocationAndCurrentTemp(w: com.example.weathernow.domain.model.WeatherInfo) {
     val maxTemp = w.daily.firstOrNull()?.maxTemp?.roundToInt() ?: 0
@@ -83,7 +89,12 @@ fun LocationAndCurrentTemp(w: com.example.weathernow.domain.model.WeatherInfo) {
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.LocationOn, contentDescription = "Location", tint = Color.White, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Filled.LocationOn,
+                contentDescription = "Location",
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
             Spacer(Modifier.width(4.dp))
             Text(w.cityName, color = Color.White, fontSize = 18.sp)
         }
@@ -108,11 +119,18 @@ fun LocationAndCurrentTemp(w: com.example.weathernow.domain.model.WeatherInfo) {
     }
 }
 
+
 @Composable
 fun HourlyForecastCard(hourly: List<HourlyWeather>) {
     AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(vertical = 8.dp)) {
-            Text("Hourly Forecast", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.Black.copy(alpha = 0.7f), modifier = Modifier.padding(horizontal = 16.dp))
+            Text(
+                "Hourly Forecast",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black.copy(alpha = 0.7f),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier
@@ -150,6 +168,7 @@ fun HourlyItem(time: String, temp: Int, condition: String, iconUrl: String) {
         Text("${temp}°", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
     }
 }
+
 
 @Composable
 fun WeatherDetailsCard(
@@ -201,21 +220,36 @@ fun DetailItem(icon: ImageVector, label: String, value: String, modifier: Modifi
             Spacer(Modifier.width(4.dp))
             Text(label, fontSize = 14.sp, color = Color.Black.copy(alpha = 0.6f))
         }
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black.copy(alpha = 0.8f))
+        Text(
+            value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black.copy(alpha = 0.8f)
+        )
     }
 }
+
 
 @Composable
 fun DailyForecastCard(daily: List<DailyWeather>) {
     AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text("7-Day Forecast", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.Black.copy(alpha = 0.7f))
+            Text(
+                "7-Day Forecast",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black.copy(alpha = 0.7f)
+            )
             Spacer(Modifier.height(10.dp))
 
             daily.forEach { d ->
                 DailyItem(d)
                 if (d != daily.last()) {
-                    Divider(color = CardBorderColor.copy(alpha = 0.4f), thickness = 0.5.dp, modifier = Modifier.padding(vertical = 4.dp))
+                    Divider(
+                        color = CardBorderColor.copy(alpha = 0.4f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
             }
         }
@@ -241,7 +275,12 @@ fun DailyItem(day: DailyWeather) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.width(120.dp)) {
-            Text(dayOfWeek, fontSize = 16.sp, color = Color.Black.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+            Text(
+                dayOfWeek,
+                fontSize = 16.sp,
+                color = Color.Black.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
+            )
             Spacer(Modifier.width(16.dp))
             Image(
                 painter = rememberAsyncImagePainter(getWeatherIconUrl(day.condition)),
@@ -276,11 +315,24 @@ fun AppCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -
     )
 }
 
+
 private fun getWeatherIconUrl(condition: String): String {
     return when {
-        condition.contains("rain", ignoreCase = true) -> "https://cdn.weatherapi.com/weather/64x64/day/308.png" // Light Rain
-        condition.contains("cloudy", ignoreCase = true) -> "https://cdn.weatherapi.com/weather/64x64/day/116.png" // Cloudy
-        condition.contains("sun", ignoreCase = true) -> "https://cdn.weatherapi.com/weather/64x64/day/113.png" // Sunny
+        condition.contains(
+            "rain",
+            ignoreCase = true
+        ) -> "https://cdn.weatherapi.com/weather/64x64/day/308.png"
+
+        condition.contains(
+            "cloudy",
+            ignoreCase = true
+        ) -> "https://cdn.weatherapi.com/weather/64x64/day/116.png"
+
+        condition.contains(
+            "sun",
+            ignoreCase = true
+        ) -> "https://cdn.weatherapi.com/weather/64x64/day/113.png"
+
         else -> "https://cdn.weatherapi.com/weather/64x64/day/113.png" // Default Sunny
     }
 }

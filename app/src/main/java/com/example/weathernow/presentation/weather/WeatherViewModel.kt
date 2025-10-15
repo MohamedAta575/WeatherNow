@@ -14,7 +14,7 @@ import javax.inject.Inject
 class WeatherViewModel @Inject constructor(
     private val repository: WeatherRepository,
     private val getPopularCitiesWeatherUseCase: GetPopularCitiesWeatherUseCase
-): ViewModel() {
+) : ViewModel() {
 
     private val _state = MutableStateFlow(WeatherState())
     val state: StateFlow<WeatherState> = _state
@@ -38,35 +38,44 @@ class WeatherViewModel @Inject constructor(
         loadPopularCitiesWeather()
     }
 
+    fun handleIntent(intent: WeatherIntent) {
+        when (intent) {
+            is WeatherIntent.LoadWeather -> loadWeatherByCity(intent.city)
+            is WeatherIntent.LoadWeatherByLocation -> loadWeatherByLocation(intent.latitude, intent.longitude)
+        }
+    }
 
-
-    fun loadWeather(city: String) {
+    private fun loadWeatherByCity(city: String) {
         _state.value = WeatherState(isLoading = true)
         viewModelScope.launch {
             try {
-
                 val info = repository.getWeatherByCity(city)
                 _state.value = WeatherState(data = info)
             } catch (e: Exception) {
-                _state.value = WeatherState(error = e.message ?: "An error occurred while fetching weather data.")
+                _state.value = WeatherState(error = e.message ?: "Error loading weather")
             }
         }
     }
 
+    private fun loadWeatherByLocation(lat: Double, lon: Double) {
+        _state.value = WeatherState(isLoading = true)
+        viewModelScope.launch {
+            try {
+                val info = repository.getWeatherByCoordinates(lat, lon)
+                _state.value = WeatherState(data = info)
+            } catch (e: Exception) {
+                _state.value = WeatherState(error = e.message ?: "Error loading weather")
+            }
+        }
+    }
 
     private fun loadPopularCitiesWeather() {
         viewModelScope.launch {
             try {
-
                 val domainResults = getPopularCitiesWeatherUseCase()
-                val presentationResults = domainResults.map { summary ->
-                    PopularCity(
-                        name = summary.name,
-                        country = summary.country,
-                        temperature = summary.temperature
-                    )
+                _popularCities.value = domainResults.map { summary ->
+                    PopularCity(summary.name, summary.country, summary.temperature)
                 }
-                _popularCities.value = presentationResults
             } catch (e: Exception) {
                 _popularCities.value = emptyList()
             }
