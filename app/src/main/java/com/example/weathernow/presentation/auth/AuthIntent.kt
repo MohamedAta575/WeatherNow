@@ -6,3 +6,4 @@ sealed class AuthIntent {
     object SignOut : AuthIntent()
     object CheckUser : AuthIntent()
 }
+

@@ -2,7 +2,7 @@ package com.example.weathernow.data.repository
 
 import com.example.weathernow.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.tasks.await
 
 class FirebaseAuthRepositoryImpl @Inject constructor(
