@@ -5,10 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.weathernow.domain.repository.WeatherRepository
 import com.example.weathernow.domain.use_case.GetPopularCitiesWeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed class WeatherEvent {
+    data object NavigateToWeatherDetail : WeatherEvent()
+}
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
@@ -24,6 +31,8 @@ class WeatherViewModel @Inject constructor(
 
     private val _recentSearches = MutableStateFlow(listOf("San Francisco", "Los Angeles", "Chicago"))
     val recentSearches: StateFlow<List<String>> = _recentSearches
+    private val _events = Channel<WeatherEvent>()
+    val events = _events.receiveAsFlow()
 
     data class PopularCity(
         val name: String,
@@ -46,25 +55,29 @@ class WeatherViewModel @Inject constructor(
     }
 
     private fun loadWeatherByCity(city: String) {
-        _state.value = WeatherState(isLoading = true)
+        _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {
                 val info = repository.getWeatherByCity(city)
-                _state.value = WeatherState(data = info)
+                _state.update { it.copy(isLoading = false, data = info) }
             } catch (e: Exception) {
-                _state.value = WeatherState(error = e.message ?: "Error loading weather")
+                _state.update { it.copy(isLoading = false, error = e.message ?: "Error loading weather") }
             }
         }
     }
 
     private fun loadWeatherByLocation(lat: Double, lon: Double) {
-        _state.value = WeatherState(isLoading = true)
+        _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {
                 val info = repository.getWeatherByCoordinates(lat, lon)
-                _state.value = WeatherState(data = info)
+
+                _state.update { it.copy(isLoading = false, data = info) }
+
+                _events.send(WeatherEvent.NavigateToWeatherDetail)
+
             } catch (e: Exception) {
-                _state.value = WeatherState(error = e.message ?: "Error loading weather")
+                _state.update { it.copy(isLoading = false, error = e.message ?: "Error loading weather") }
             }
         }
     }

@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.datastore.preferences)
     kapt(libs.hilt.compiler)
     kapt(libs.moshi.kotlin.codegen)
     testImplementation(libs.junit)

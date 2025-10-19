@@ -3,6 +3,7 @@ package com.example.weathernow.presentation.auth
 data class AuthState(
     val email: String = "",
     val password: String = "",
+    val userName: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
     val isLoading: Boolean = false,

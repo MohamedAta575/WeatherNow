@@ -6,9 +6,9 @@ import jakarta.inject.Inject
 class SignUpUseCase @Inject constructor(
     private val repo: AuthRepository
 ) {
-    suspend operator fun invoke(email: String, password: String): Result<String> {
+    suspend operator fun invoke(userName: String,email: String, password: String): Result<String> {
         return try {
-            repo.signUp(email, password)
+            repo.signUp(userName,email, password)
                 .map { "Account created successfully 🌤" }
                 .getOrElse { e ->
                     throw Exception(mapFirebaseError(e))

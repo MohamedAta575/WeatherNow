@@ -21,17 +21,20 @@ class GetPopularCitiesWeatherUseCase @Inject constructor(
         val deferredResults = defaultPopularCities.map { city ->
             async {
                 try {
-                    val parts = city.split(", ")
-                    val cityName = parts[0]
-                    val countryName = parts.getOrElse(1) { "" }
-
                     val info = repository.getWeatherByCity(city)
+                    if (info != null) {
+                        val parts = city.split(", ")
+                        val cityName = parts[0]
+                        val countryName = parts.getOrElse(1) { "" }
 
-                    PopularCitySummary(
-                        name = cityName,
-                        country = countryName,
-                        temperature = "${info.currentTemp.toInt()}°C"
-                    )
+                        PopularCitySummary(
+                            name = cityName,
+                            country = countryName,
+                            temperature = "${info.currentTemp.toInt()}°C"
+                        )
+                    } else {
+                        null
+                    }
                 } catch (e: Exception) {
                     null
                 }

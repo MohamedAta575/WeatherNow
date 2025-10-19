@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.weathernow.presentation.component.CustomSnackbar
 import kotlinx.coroutines.delay
 
@@ -40,6 +40,7 @@ fun LoginScreen(
     var showMessage by remember { mutableStateOf(false) }
     var messageText by remember { mutableStateOf("") }
     var isSuccess by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(true) }
 
     // ✅ success message
     LaunchedEffect(state.successMessage) {
@@ -179,12 +180,20 @@ fun LoginScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it }
+                        )
+                        Text("Remember me")
+                    }
+
 
                     Button(
                         onClick = {
                             showErrors = true
                             if (email.isNotBlank() && password.isNotBlank()) {
-                                viewModel.handleIntent(AuthIntent.SignIn(email, password))
+                                viewModel.handleIntent(AuthIntent.SignIn(email, password,rememberMe))
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),

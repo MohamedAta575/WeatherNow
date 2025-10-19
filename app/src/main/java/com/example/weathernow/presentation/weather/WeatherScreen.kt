@@ -1,4 +1,3 @@
-
 package com.example.weathernow.presentation.weather
 
 import androidx.compose.foundation.Image
@@ -19,7 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.weathernow.domain.model.DailyWeather
 import com.example.weathernow.domain.model.HourlyWeather
@@ -77,6 +76,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = hiltViewModel()) {
                     DailyForecastCard(w.daily)
                 }
             }
+            else -> Text(
+                "Waiting for location data. Please check connection or try searching.",
+                color = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }
@@ -333,6 +337,6 @@ private fun getWeatherIconUrl(condition: String): String {
             ignoreCase = true
         ) -> "https://cdn.weatherapi.com/weather/64x64/day/113.png"
 
-        else -> "https://cdn.weatherapi.com/weather/64x64/day/113.png" // Default Sunny
+        else -> "https://cdn.weatherapi.com/weather/64x64/day/113.png"
     }
 }

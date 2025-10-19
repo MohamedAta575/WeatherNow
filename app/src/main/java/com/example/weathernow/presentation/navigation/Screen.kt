@@ -7,4 +7,6 @@ sealed class Screen(val route: String) {
     object Weather : Screen("weather/{city}") {
         fun createRoute(city: String) = "weather/$city"
     }
+    object Splash : Screen("splash")
+
 }

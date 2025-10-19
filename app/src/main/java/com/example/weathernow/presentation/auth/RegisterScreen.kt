@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.weathernow.presentation.component.CustomSnackbar
 import kotlinx.coroutines.delay
 
@@ -226,7 +226,6 @@ fun RegisterScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
                     // ✅ Register Button
                     Button(
                         onClick = {
@@ -235,8 +234,11 @@ fun RegisterScreen(
                                 fullName.isBlank() || email.isBlank() || password.isBlank() -> Unit
                                 password != confirmPassword -> Unit
                                 !agreeTerms -> Unit
-                                else -> viewModel.handleIntent(AuthIntent.SignUp(email, password))
-                            }
+                                else -> viewModel.handleIntent(AuthIntent.SignUp(
+                                    userName = fullName,
+                                    email = email,
+                                    password = password
+                                ))                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(Color(0xFF007BFF))
