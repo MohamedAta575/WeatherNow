@@ -1,8 +1,9 @@
 package com.example.weathernow.di
 
-
 import com.example.weathernow.data.repository.FirebaseAuthRepositoryImpl
+import com.example.weathernow.data.repository.WeatherRepositoryImpl
 import com.example.weathernow.domain.repository.AuthRepository
+import com.example.weathernow.domain.repository.WeatherRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,4 +19,10 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         firebaseAuthRepositoryImpl: FirebaseAuthRepositoryImpl
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWeatherRepository(
+        weatherRepositoryImpl: WeatherRepositoryImpl
+    ): WeatherRepository
 }

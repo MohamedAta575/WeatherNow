@@ -1,5 +1,6 @@
 package com.example.weathernow.presentation.weather
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,17 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.weathernow.presentation.auth.AuthViewModel
-import com.example.weathernow.ui.theme.DesignBlue
-import com.google.android.gms.location.LocationServices
 import com.example.weathernow.presentation.auth.AuthIntent
-
-import android.Manifest
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
+import com.example.weathernow.ui.theme.DesignBlue
+import com.google.android.gms.location.*
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,8 +54,22 @@ fun LocationScreen(
     val recentSearches by viewModel.recentSearches.collectAsState()
     val popularCities by viewModel.popularCities.collectAsState()
 
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     val authState by authViewModel.state.collectAsState()
+
+    // ✅ Load user info when screen opens
+    LaunchedEffect(Unit) {
+        authViewModel.handleIntent(AuthIntent.CheckUser)
+    }
+
+    // ✅ Listen to navigation events
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            if (event is WeatherEvent.NavigateToWeatherDetail) {
+                onLocationWeatherLoaded()
+            }
+        }
+    }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -72,15 +84,6 @@ fun LocationScreen(
             }
         }
     )
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collectLatest { event ->
-            if (event is WeatherEvent.NavigateToWeatherDetail) {
-                onLocationWeatherLoaded()
-            }
-        }
-    }
-
 
     val requestLocationPermission: () -> Unit = {
         when {
@@ -101,16 +104,20 @@ fun LocationScreen(
         }
     }
 
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(colors = listOf(Color(0xFF4AA3FF), Color(0xFF6B63FF))))
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+        ) {
 
             Spacer(Modifier.height(40.dp))
 
+            // ===== Header =====
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -130,7 +137,8 @@ fun LocationScreen(
                     )
                 }
 
-                Box {
+                // ===== 3 Dots Menu =====
+                Box(modifier = Modifier.zIndex(1f)) {
                     IconButton(onClick = { expanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
                     }
@@ -150,6 +158,7 @@ fun LocationScreen(
 
             Spacer(Modifier.height(32.dp))
 
+            // ===== Search =====
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = {
@@ -158,7 +167,9 @@ fun LocationScreen(
                 },
                 placeholder = { Text("Search for a city...", color = Color.Gray) },
                 singleLine = true,
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = Color.Gray) },
+                leadingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = "Search", tint = Color.Gray)
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White.copy(alpha = 0.9f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.9f),
@@ -172,6 +183,7 @@ fun LocationScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // ===== Current Location Button =====
             Button(
                 onClick = requestLocationPermission,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.9f)),
@@ -192,6 +204,7 @@ fun LocationScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // ===== Search Results / Recent / Popular =====
             if (cities.isNotEmpty() && searchQuery.isNotEmpty()) {
                 Text("Search Results", color = Color.White, fontWeight = FontWeight.SemiBold)
                 LazyColumn {
@@ -204,7 +217,10 @@ fun LocationScreen(
                 LazyColumn {
                     item {
                         Text("Recent Searches", color = Color.White, fontWeight = FontWeight.SemiBold)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             recentSearches.forEach { city ->
                                 RecentSearchChip(city = city, onCitySelected = onCitySelected)
                             }
@@ -224,6 +240,7 @@ fun LocationScreen(
     }
 }
 
+// ======= Location Helper =======
 @SuppressLint("MissingPermission")
 fun getCurrentLocation(
     context: Context,
@@ -232,7 +249,7 @@ fun getCurrentLocation(
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
     val locationRequest = LocationRequest.Builder(
-        com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+        Priority.PRIORITY_HIGH_ACCURACY,
         5000
     ).setMaxUpdates(1).build()
 
@@ -258,7 +275,7 @@ fun getCurrentLocation(
     }
 }
 
-
+// ======= Dropdown Menu =======
 @Composable
 fun UserDropdownMenu(
     expanded: Boolean,
@@ -267,10 +284,7 @@ fun UserDropdownMenu(
     userEmail: String,
     onLogout: () -> Unit
 ) {
-    val principalText = if (userName.isNotEmpty()) userName else userEmail
-    val secondaryText = if (userName.isNotEmpty()) userEmail else null
-
-    if (principalText.isEmpty()) return
+    val displayName = if (userName.isNotEmpty()) userName else userEmail
 
     DropdownMenu(
         expanded = expanded,
@@ -293,18 +307,13 @@ fun UserDropdownMenu(
 
                 Column {
                     Text(
-                        text = principalText,
+                        text = displayName.ifEmpty { "User" },
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color.Black
                     )
-
-                    secondaryText?.let {
-                        Text(
-                            text = it,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                    if (userEmail.isNotEmpty()) {
+                        Text(text = userEmail, fontSize = 12.sp, color = Color.Gray)
                     }
                 }
             }
@@ -322,11 +331,7 @@ fun UserDropdownMenu(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Logout",
-                        color = Color.Red,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
                 }
             },
             onClick = {
@@ -338,7 +343,7 @@ fun UserDropdownMenu(
     }
 }
 
-
+// ======= UI Components =======
 @Composable
 fun SearchResultItem(city: String, onCitySelected: (String) -> Unit) {
     Row(
@@ -376,7 +381,9 @@ fun PopularCityCard(city: WeatherViewModel.PopularCity, onCitySelected: (String)
             .clickable { onCitySelected(city.name) }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

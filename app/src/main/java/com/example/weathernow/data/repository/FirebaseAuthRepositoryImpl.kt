@@ -57,6 +57,7 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
     override fun getCurrentUserName(): String? {
         return auth.currentUser?.displayName
     }
@@ -71,5 +72,21 @@ class FirebaseAuthRepositoryImpl @Inject constructor(
 
     override fun getRememberMe(): Flow<Boolean> {
         return userPreferences.rememberMeFlow
+    }
+
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            FirebaseAuth.getInstance().sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    override suspend fun setCurrentUserName(name: String) {
+        userPreferences.setUserName(name)
+    }
+
+    override suspend fun setCurrentUserEmail(email: String) {
+        userPreferences.setUserEmail(email)
     }
 }

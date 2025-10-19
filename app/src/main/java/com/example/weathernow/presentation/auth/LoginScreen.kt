@@ -74,6 +74,9 @@ fun LoginScreen(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🌞 App Logo & Title
             Text(text = "☀️", fontSize = 40.sp)
             Text(
                 text = "WeatherNow",
@@ -88,6 +91,7 @@ fun LoginScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+
             // 🔁 Tabs
             Row(
                 modifier = Modifier
@@ -95,7 +99,7 @@ fun LoginScreen(
                     .background(Color(0x552E85FF), RoundedCornerShape(24.dp))
             ) {
                 Button(
-                    onClick = { },
+                    onClick = { /* Already in Login */ },
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 12.dp),
@@ -110,9 +114,7 @@ fun LoginScreen(
                 }
 
                 Button(
-                    onClick = {
-                        onNavigateToRegister()
-                    },
+                    onClick = { onNavigateToRegister() },
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 12.dp),
@@ -146,6 +148,9 @@ fun LoginScreen(
                         fontSize = 13.sp,
                         color = Color.Gray
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -153,10 +158,7 @@ fun LoginScreen(
                         leadingIcon = { Icon(Icons.Default.Email, null) },
                         isError = showErrors && email.isBlank(),
                         modifier = Modifier.fillMaxWidth(),
-                        textStyle = TextStyle(
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                        )
+                        textStyle = TextStyle(color = Color.Black, fontSize = 16.sp)
                     )
                     AnimatedVisibility(showErrors && email.isBlank()) {
                         Text("Please enter your email", color = Color.Red, fontSize = 12.sp)
@@ -185,6 +187,7 @@ fun LoginScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = rememberMe,
@@ -193,22 +196,20 @@ fun LoginScreen(
                         Text("Remember me")
                     }
 
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = {
                             showErrors = true
                             if (email.isNotBlank() && password.isNotBlank()) {
-                                viewModel.handleIntent(AuthIntent.SignIn(email, password,rememberMe))
+                                viewModel.handleIntent(AuthIntent.SignIn(email, password, rememberMe))
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(Color(0xFF007BFF))
                     ) {
                         if (state.isLoading)
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
                         else
                             Text("Sign in")
                     }
@@ -216,6 +217,7 @@ fun LoginScreen(
             }
         }
 
+        // ✅ Snackbar
         CustomSnackbar(
             visible = showMessage,
             message = messageText,

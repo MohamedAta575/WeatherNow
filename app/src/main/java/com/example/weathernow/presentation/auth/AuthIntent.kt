@@ -5,5 +5,7 @@ sealed class AuthIntent {
     data class SignUp(val userName: String,val email: String, val password: String,) : AuthIntent()
     object SignOut : AuthIntent()
     object CheckUser : AuthIntent()
+    data class ForgotPassword(val email: String) : AuthIntent()
+
 }
 
