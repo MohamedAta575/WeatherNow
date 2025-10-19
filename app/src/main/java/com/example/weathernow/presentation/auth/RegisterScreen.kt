@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -140,7 +141,11 @@ fun RegisterScreen(
                         label = { Text("Full Name") },
                         leadingIcon = { Icon(Icons.Default.Person, null) },
                         isError = showErrors && fullName.isBlank(),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(
+                            color = Color.Black,
+                            fontSize = 16.sp,
+                        )
                     )
                     AnimatedVisibility(showErrors && fullName.isBlank()) {
                         Text("Please enter your full name", color = Color.Red, fontSize = 12.sp)
@@ -155,7 +160,11 @@ fun RegisterScreen(
                         label = { Text("Email") },
                         leadingIcon = { Icon(Icons.Default.Email, null) },
                         isError = showErrors && email.isBlank(),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(
+                            color = Color.Black,
+                            fontSize = 16.sp,
+                        )
                     )
                     AnimatedVisibility(showErrors && email.isBlank()) {
                         Text("Please enter your email", color = Color.Red, fontSize = 12.sp)
@@ -271,3 +280,5 @@ fun RegisterScreen(
         )
     }
 }
+
+
