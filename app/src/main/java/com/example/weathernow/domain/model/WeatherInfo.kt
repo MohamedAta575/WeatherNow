@@ -8,8 +8,9 @@ data class WeatherInfo(
     val humidity: Int,
     val windKph: Double,
     val hourly: List<HourlyWeather>,
-    val daily: List<DailyWeather>
-)
+    val daily: List<DailyWeather>,
+
+    )
 
 data class HourlyWeather(
     val time: String,

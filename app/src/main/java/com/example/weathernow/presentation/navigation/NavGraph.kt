@@ -107,7 +107,10 @@ fun NavGraph(navController: NavHostController) {
                     viewModel.handleIntent(WeatherIntent.LoadWeather(city))
                 }
             }
-            WeatherScreen(viewModel = viewModel)
+            WeatherScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack()}
+            )
         }
     }
 }

@@ -1,42 +1,36 @@
 package com.example.weathernow.presentation.weather
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.weathernow.presentation.auth.AuthViewModel
 import com.example.weathernow.presentation.auth.AuthIntent
+import com.example.weathernow.presentation.auth.AuthViewModel
+import com.example.weathernow.presentation.utils.LocationManager
+import com.example.weathernow.presentation.components.*
 import com.example.weathernow.ui.theme.DesignBlue
-import com.google.android.gms.location.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,72 +43,73 @@ fun LocationScreen(
     onLocationWeatherLoaded: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // 🔹 UI States
     var searchQuery by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var isLocating by remember { mutableStateOf(false) }
+
+    // 🔹 Observing states from ViewModels
     val cities by viewModel.cities.collectAsState()
     val recentSearches by viewModel.recentSearches.collectAsState()
     val popularCities by viewModel.popularCities.collectAsState()
-
-    var expanded by rememberSaveable { mutableStateOf(false) }
     val authState by authViewModel.state.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    // ✅ Load user info when screen opens
-    LaunchedEffect(Unit) {
-        authViewModel.handleIntent(AuthIntent.CheckUser)
-    }
+    // 🔹 Location Manager
+    val locationManager = remember { LocationManager(context) }
 
-    // ✅ Listen to navigation events
-    LaunchedEffect(Unit) {
-        viewModel.events.collectLatest { event ->
-            if (event is WeatherEvent.NavigateToWeatherDetail) {
-                onLocationWeatherLoaded()
-            }
-        }
-    }
-
+    // ✅ Handle permissions
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                getCurrentLocation(
-                    context,
-                    onLocationReceived = { lat, lon ->
+                scope.launch {
+                    isLocating = true
+                    val loc = locationManager.getUserLocation()
+                    isLocating = false
+                    loc?.let { (lat, lon) ->
+                        Log.d("LocationScreen", "Got location: $lat, $lon")
                         viewModel.handleIntent(WeatherIntent.LoadWeatherByLocation(lat, lon))
                     }
-                )
+                }
             }
         }
     )
 
-    val requestLocationPermission: () -> Unit = {
-        when {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                getCurrentLocation(
-                    context,
-                    onLocationReceived = { lat, lon ->
-                        viewModel.handleIntent(WeatherIntent.LoadWeatherByLocation(lat, lon))
-                    }
-                )
-            }
-            else -> {
-                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    // ✅ Auth check once
+    LaunchedEffect(Unit) {
+        authViewModel.handleIntent(AuthIntent.CheckUser)
+    }
+
+    // ✅ Observe events
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            if (event is WeatherEvent.NavigateToWeatherDetail) {
+                val weatherData = viewModel.state.value.data
+                if (weatherData != null) {
+                    onCitySelected(weatherData.cityName)
+                }
             }
         }
     }
 
+    // ✅ UI Layout
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(Color(0xFF4AA3FF), Color(0xFF6B63FF))))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF4AA3FF), Color(0xFF6B63FF))
+                )
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
         ) {
-
             Spacer(Modifier.height(40.dp))
 
             // ===== Header =====
@@ -137,7 +132,7 @@ fun LocationScreen(
                     )
                 }
 
-                // ===== 3 Dots Menu =====
+                // ===== Menu =====
                 Box(modifier = Modifier.zIndex(1f)) {
                     IconButton(onClick = { expanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
@@ -158,7 +153,7 @@ fun LocationScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // ===== Search =====
+            // ===== Search Bar =====
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = {
@@ -168,7 +163,7 @@ fun LocationScreen(
                 placeholder = { Text("Search for a city...", color = Color.Gray) },
                 singleLine = true,
                 leadingIcon = {
-                    Icon(Icons.Filled.Search, contentDescription = "Search", tint = Color.Gray)
+                    Icon(Icons.Filled.Search, contentDescription = "Search icon", tint = Color.Gray)
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White.copy(alpha = 0.9f),
@@ -185,7 +180,20 @@ fun LocationScreen(
 
             // ===== Current Location Button =====
             Button(
-                onClick = requestLocationPermission,
+                onClick = {
+                    if (locationManager.hasLocationPermission()) {
+                        scope.launch {
+                            isLocating = true
+                            val loc = locationManager.getUserLocation()
+                            isLocating = false
+                            loc?.let { (lat, lon) ->
+                                viewModel.handleIntent(WeatherIntent.LoadWeatherByLocation(lat, lon))
+                            }
+                        }
+                    } else {
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.9f)),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
@@ -196,15 +204,41 @@ fun LocationScreen(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(vertical = 4.dp)
                 ) {
-                    Icon(Icons.Filled.LocationOn, contentDescription = "Location", tint = DesignBlue)
+                    Icon(Icons.Filled.LocationOn, contentDescription = "Location icon", tint = DesignBlue)
                     Spacer(Modifier.width(8.dp))
                     Text("Use Current Location", color = DesignBlue, fontWeight = FontWeight.SemiBold)
                 }
             }
 
+            // ✅ Loading Indicator while locating
+            if (isLocating) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
 
-            // ===== Search Results / Recent / Popular =====
+            // ===== Error Message =====
+            state.error?.let {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+
+            // ===== Search Results / Popular Cities =====
             if (cities.isNotEmpty() && searchQuery.isNotEmpty()) {
                 Text("Search Results", color = Color.White, fontWeight = FontWeight.SemiBold)
                 LazyColumn {
@@ -236,166 +270,6 @@ fun LocationScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-// ======= Location Helper =======
-@SuppressLint("MissingPermission")
-fun getCurrentLocation(
-    context: Context,
-    onLocationReceived: (Double, Double) -> Unit
-) {
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-    val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY,
-        5000
-    ).setMaxUpdates(1).build()
-
-    val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            locationResult.lastLocation?.let { location ->
-                onLocationReceived(location.latitude, location.longitude)
-                fusedLocationClient.removeLocationUpdates(this)
-            }
-        }
-    }
-
-    if (ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            context.mainLooper
-        )
-    }
-}
-
-// ======= Dropdown Menu =======
-@Composable
-fun UserDropdownMenu(
-    expanded: Boolean,
-    onDismissRequest: () -> Unit,
-    userName: String,
-    userEmail: String,
-    onLogout: () -> Unit
-) {
-    val displayName = if (userName.isNotEmpty()) userName else userEmail
-
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = onDismissRequest,
-        offset = DpOffset(x = (-140).dp, y = 8.dp),
-        modifier = Modifier
-            .background(Color.White, shape = RoundedCornerShape(12.dp))
-            .width(IntrinsicSize.Max)
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "User Avatar",
-                    tint = DesignBlue,
-                    modifier = Modifier.size(24.dp)
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = displayName.ifEmpty { "User" },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
-                    if (userEmail.isNotEmpty()) {
-                        Text(text = userEmail, fontSize = 12.sp, color = Color.Gray)
-                    }
-                }
-            }
-        }
-
-        Divider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
-
-        DropdownMenuItem(
-            text = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.ExitToApp,
-                        contentDescription = "Logout Icon",
-                        tint = Color.Red,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
-                }
-            },
-            onClick = {
-                onDismissRequest()
-                onLogout()
-            },
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-    }
-}
-
-// ======= UI Components =======
-@Composable
-fun SearchResultItem(city: String, onCitySelected: (String) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCitySelected(city) }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(city, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Light)
-    }
-}
-
-@Composable
-fun RecentSearchChip(city: String, onCitySelected: (String) -> Unit) {
-    AssistChip(
-        onClick = { onCitySelected(city) },
-        label = { Text(city, fontSize = 14.sp) },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = Color.White.copy(alpha = 0.2f),
-            labelColor = Color.White
-        ),
-        shape = RoundedCornerShape(20.dp),
-        border = null
-    )
-}
-
-@Composable
-fun PopularCityCard(city: WeatherViewModel.PopularCity, onCitySelected: (String) -> Unit) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCitySelected(city.name) }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.LocationOn, contentDescription = "Location", tint = DesignBlue)
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text(city.name, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = Color.Black)
-                    Text(city.country, fontSize = 14.sp, color = Color.Gray)
-                }
-            }
-            Text(city.temperature, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.Black)
         }
     }
 }

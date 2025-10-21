@@ -1,4 +1,4 @@
-package com.example.weathernow.presentation.component
+package com.example.weathernow.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

@@ -2,8 +2,10 @@ package com.example.weathernow.presentation.weather
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.weathernow.domain.model.WeatherInfo
 import com.example.weathernow.domain.repository.WeatherRepository
 import com.example.weathernow.domain.use_case.GetPopularCitiesWeatherUseCase
+import com.example.weathernow.domain.use_case.SendWeatherNotificationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,13 +16,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class WeatherEvent {
-    data object NavigateToWeatherDetail : WeatherEvent()
+    data class NavigateToWeatherDetail(val weatherInfo: WeatherInfo) : WeatherEvent()
 }
+
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     private val repository: WeatherRepository,
-    private val getPopularCitiesWeatherUseCase: GetPopularCitiesWeatherUseCase
+    private val getPopularCitiesWeatherUseCase: GetPopularCitiesWeatherUseCase,
+    private val sendWeatherNotificationUseCase: SendWeatherNotificationUseCase
+
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WeatherState())
@@ -60,6 +65,12 @@ class WeatherViewModel @Inject constructor(
             try {
                 val info = repository.getWeatherByCity(city)
                 _state.update { it.copy(isLoading = false, data = info) }
+                info?.let {
+                    sendWeatherNotificationUseCase(it)
+                    _events.send(WeatherEvent.NavigateToWeatherDetail(it))
+                }
+
+
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Error loading weather") }
             }
@@ -73,8 +84,10 @@ class WeatherViewModel @Inject constructor(
                 val info = repository.getWeatherByCoordinates(lat, lon)
 
                 _state.update { it.copy(isLoading = false, data = info) }
-
-                _events.send(WeatherEvent.NavigateToWeatherDetail)
+                info?.let {
+                    sendWeatherNotificationUseCase(it)
+                    _events.send(WeatherEvent.NavigateToWeatherDetail(it))
+                }
 
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false, error = e.message ?: "Error loading weather") }
