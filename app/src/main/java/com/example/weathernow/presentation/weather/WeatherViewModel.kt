@@ -2,6 +2,7 @@ package com.example.weathernow.presentation.weather
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.weathernow.data.store.UserPreferences
 import com.example.weathernow.domain.model.WeatherInfo
 import com.example.weathernow.domain.repository.WeatherRepository
 import com.example.weathernow.domain.use_case.GetPopularCitiesWeatherUseCase
@@ -24,7 +25,8 @@ sealed class WeatherEvent {
 class WeatherViewModel @Inject constructor(
     private val repository: WeatherRepository,
     private val getPopularCitiesWeatherUseCase: GetPopularCitiesWeatherUseCase,
-    private val sendWeatherNotificationUseCase: SendWeatherNotificationUseCase
+    private val sendWeatherNotificationUseCase: SendWeatherNotificationUseCase,
+    private val userPreferences: UserPreferences
 
 ) : ViewModel() {
 
@@ -34,8 +36,9 @@ class WeatherViewModel @Inject constructor(
     private val _cities = MutableStateFlow<List<String>>(emptyList())
     val cities: StateFlow<List<String>> = _cities
 
-    private val _recentSearches = MutableStateFlow(listOf("San Francisco", "Los Angeles", "Chicago"))
+    private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches
+
     private val _events = Channel<WeatherEvent>()
     val events = _events.receiveAsFlow()
 
@@ -50,6 +53,16 @@ class WeatherViewModel @Inject constructor(
 
     init {
         loadPopularCitiesWeather()
+        collectRecentSearches()
+    }
+
+
+    private fun collectRecentSearches() {
+        viewModelScope.launch {
+            userPreferences.recentCitiesFlow.collect { cities ->
+                _recentSearches.value = cities
+            }
+        }
     }
 
     fun handleIntent(intent: WeatherIntent) {
@@ -66,6 +79,8 @@ class WeatherViewModel @Inject constructor(
                 val info = repository.getWeatherByCity(city)
                 _state.update { it.copy(isLoading = false, data = info) }
                 info?.let {
+                    userPreferences.saveRecentCity(city)
+
                     sendWeatherNotificationUseCase(it)
                     _events.send(WeatherEvent.NavigateToWeatherDetail(it))
                 }
@@ -85,6 +100,8 @@ class WeatherViewModel @Inject constructor(
 
                 _state.update { it.copy(isLoading = false, data = info) }
                 info?.let {
+                    userPreferences.saveRecentCity(it.cityName)
+
                     sendWeatherNotificationUseCase(it)
                     _events.send(WeatherEvent.NavigateToWeatherDetail(it))
                 }

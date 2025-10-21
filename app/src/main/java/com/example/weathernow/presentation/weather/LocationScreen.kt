@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -166,6 +167,8 @@ fun LocationScreen(
                     Icon(Icons.Filled.Search, contentDescription = "Search icon", tint = Color.Gray)
                 },
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
                     focusedContainerColor = Color.White.copy(alpha = 0.9f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.9f),
                     focusedBorderColor = Color.Transparent,
@@ -251,11 +254,11 @@ fun LocationScreen(
                 LazyColumn {
                     item {
                         Text("Recent Searches", color = Color.White, fontWeight = FontWeight.SemiBold)
-                        Row(
+                        LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            recentSearches.forEach { city ->
+                          items(recentSearches){ city ->
                                 RecentSearchChip(city = city, onCitySelected = onCitySelected)
                             }
                         }

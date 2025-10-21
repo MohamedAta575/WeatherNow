@@ -180,6 +180,10 @@ fun LoginScreen(
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = showErrors && password.isBlank(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     AnimatedVisibility(showErrors && password.isBlank()) {

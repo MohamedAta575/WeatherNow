@@ -141,6 +141,10 @@ fun RegisterScreen(
                         label = { Text("Full Name") },
                         leadingIcon = { Icon(Icons.Default.Person, null) },
                         isError = showErrors && fullName.isBlank(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(
                             color = Color.Black,
@@ -160,6 +164,10 @@ fun RegisterScreen(
                         label = { Text("Email") },
                         leadingIcon = { Icon(Icons.Default.Email, null) },
                         isError = showErrors && email.isBlank(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(
                             color = Color.Black,
@@ -188,6 +196,10 @@ fun RegisterScreen(
                         },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = showErrors && password.isBlank(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     AnimatedVisibility(showErrors && password.isBlank()) {
@@ -212,6 +224,10 @@ fun RegisterScreen(
                         },
                         visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = showErrors && (confirmPassword.isBlank() || confirmPassword != password),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     AnimatedVisibility(showErrors && confirmPassword != password) {
