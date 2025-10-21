@@ -27,7 +27,6 @@ class WeatherWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            // ✅ تحقق من إذن الإشعارات (Android 13+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val hasPermission = ContextCompat.checkSelfPermission(
                     context,
@@ -39,10 +38,8 @@ class WeatherWorker @AssistedInject constructor(
                 }
             }
 
-            // ✅ الحصول على الطقس بناءً على الموقع الفعلي
             val weather = getUserWeather() ?: return Result.retry()
 
-            // ✅ إرسال إشعار حسب حالة الطقس
             when {
                 weather.condition.contains("rain", ignoreCase = true) -> {
                     notificationHelper.showWeatherNotification(
@@ -74,7 +71,6 @@ class WeatherWorker @AssistedInject constructor(
         }
     }
 
-    // ✅ دالة مساعده لجلب الموقع والطقس
     @SuppressLint("MissingPermission")
     private suspend fun getUserWeather(): WeatherInfo? {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)

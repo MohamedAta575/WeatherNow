@@ -19,9 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         notificationHelper = NotificationHelper(this)
-
         setContent {
             WeatherNowTheme {
                 NotificationPermissionHandler()

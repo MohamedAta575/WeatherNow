@@ -31,7 +31,7 @@ fun UserDropdownMenu(
             .width(230.dp)
             .shadow(10.dp, RoundedCornerShape(12.dp))
             .background(Color(0xFFF9F9FB), RoundedCornerShape(12.dp)),
-        offset = DpOffset(x = (-160).dp, y = 0.dp), // 👈 يخلي المينيو تظهر بجانب الأيقونة
+        offset = DpOffset(x = (-160).dp, y = 0.dp),
         properties = PopupProperties(focusable = true)
     ) {
         DropdownMenuItem(
