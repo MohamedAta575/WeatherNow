@@ -11,6 +11,7 @@
 
 ## 📸 Screenshots
 
+<<<<<<< HEAD
 | Search & Popular Cities | Weather Details & Forecast |
 | :----------------------: | :-----------------------: |
 | ![Screenshot 1](images/screenshot1.png) | ![Screenshot 2](images/screenshot2.png) |
@@ -23,6 +24,14 @@
 Watch a quick demonstration of the app's user interface and core features:
 
 [![WeatherNow Demo Thumbnail](https://img.youtube.com/vi/dG0z4xN7_vs/0.jpg)](https://www.youtube.com/shorts/dG0z4xN7_vs)
+=======
+![Screenshot 1](images/screenshot1.png)
+![Screenshot 2](images/screenshot2.png)
+![Screenshot 3](images/screenshot3.png)
+![Screenshot 4](images/screenshot4.png)
+![screenshot5.png](images/screenshot5.png)
+![screenshot6.png](images/screenshot6.png)
+>>>>>>> d6dbc93 (Initial commit)
 
 ---
 
